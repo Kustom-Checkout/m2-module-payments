@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright © Klarna Bank AB (publ)
  *
@@ -10,7 +11,7 @@ namespace Klarna\Kp\Test\Unit\Model\Api\Builder\Customer;
 
 use Klarna\Kp\Model\Api\Builder\Customer\TypeResolver;
 use Magento\Quote\Model\Quote;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Klarna\Base\Test\Unit\Mock\TestCase;
 use Magento\Quote\Model\Quote\Address;
 use Magento\Store\Model\Store;
@@ -38,6 +39,24 @@ class TypeResolverTest extends TestCase
      */
     private Address $billingAddress;
 
+    protected function setUp(): void
+    {
+        $this->model = parent::setUpMocks(TypeResolver::class);
+
+        $this->quote = $this->mockFactory->create(Quote::class);
+
+        $this->shippingAddress = $this->mockFactory->create(Address::class);
+        $this->billingAddress = $this->mockFactory->create(Address::class);
+
+        $this->quote->method('getShippingAddress')->willReturn($this->shippingAddress);
+        $this->quote->method('getBillingAddress')->willReturn($this->billingAddress);
+
+        $store = $this->mockFactory->create(Store::class);
+        $this->quote->method('getStore')
+            ->willReturn($store);
+    }
+
+    #[DataProvider('addressDifferentStatesDataProvider')]
     /**
      * @dataProvider addressDifferentStatesDataProvider
      *
@@ -58,32 +77,9 @@ class TypeResolverTest extends TestCase
     }
 
     /**
-     * @dataProvider addressDifferentStatesDataProvider
-     *
-     * @param array $address
-     * @return void
-     */
-    public function testWhenB2bIsDisabledPurchaseWillNotMarkAsB2bAnyway(array $address): void
-    {
-        $this->dependencyMocks['paymentConfig']->method('isB2bEnabled')
-            ->willReturn(false);
-
-        $this->shippingAddress->method('getCompany')
-            ->willReturn($address['shipping_address_company']);
-        $this->billingAddress->method('getCompany')
-            ->willReturn($address['billing_address_company']);
-
-        // since the b2b is disabled, the expected result is always 'person'
-        $expected = 'person';
-
-        static::assertEquals($expected, $this->model->getData($this->quote));
-    }
-
-    /**
-     *
      * @return array
      */
-    public function addressDifferentStatesDataProvider(): array
+    public static function addressDifferentStatesDataProvider(): array
     {
         return [
             [
@@ -117,20 +113,62 @@ class TypeResolverTest extends TestCase
         ];
     }
 
-    protected function setUp(): void
+    #[DataProvider('addressDifferentStatesWithB2bOffDataProvider')]
+    /**
+     * @dataProvider addressDifferentStatesWithB2bOffDataProvider
+     *
+     * @param array $address
+     * @return void
+     */
+    public function testWhenB2bIsDisabledPurchaseWillNotMarkAsB2bAnyway(
+        array $address,
+        string $expected
+    ): void {
+        $this->dependencyMocks['paymentConfig']->method('isB2bEnabled')
+            ->willReturn(false);
+
+        $this->shippingAddress->method('getCompany')
+            ->willReturn($address['shipping_address_company']);
+        $this->billingAddress->method('getCompany')
+            ->willReturn($address['billing_address_company']);
+
+        static::assertEquals($expected, $this->model->getData($this->quote));
+    }
+
+    /**
+     * @return array
+     */
+    public static function addressDifferentStatesWithB2bOffDataProvider(): array
     {
-        $this->model = parent::setUpMocks(TypeResolver::class);
-
-        $this->quote = $this->mockFactory->create(Quote::class);
-
-        $this->shippingAddress = $this->mockFactory->create(Address::class);
-        $this->billingAddress = $this->mockFactory->create(Address::class);
-
-        $this->quote->method('getShippingAddress')->willReturn($this->shippingAddress);
-        $this->quote->method('getBillingAddress')->willReturn($this->billingAddress);
-
-        $store = $this->mockFactory->create(Store::class);
-        $this->quote->method('getStore')
-            ->willReturn($store);
+        return [
+            [
+                'address' => [
+                    'shipping_address_company' => null,
+                    'billing_address_company' => null,
+                ],
+                'expected' => 'person',
+            ],
+            [
+                'address' => [
+                    'shipping_address_company' => 'a-random-value',
+                    'billing_address_company' => null,
+                ],
+                'expected' => 'person',
+            ],
+            [
+                'address' => [
+                    'shipping_address_company' => null,
+                    'billing_address_company' => 'completely-random-value',
+                ],
+                'expected' => 'person',
+            ],
+            [
+                'address' => [
+                    'shipping_address_company' => 'a-random-value',
+                    'billing_address_company' => 'completely-random-value',
+                ],
+                'expected' => 'person',
+            ],
+        ];
     }
 }

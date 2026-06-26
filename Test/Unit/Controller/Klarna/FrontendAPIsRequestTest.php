@@ -1,24 +1,27 @@
 <?php
+
 /**
  * Copyright © Klarna Bank AB (publ)
  *
  * For the full copyright and license information, please view the NOTICE
  * and LICENSE files that were distributed with this source code.
  */
+
 declare(strict_types=1);
 
 namespace Klarna\Kp\Test\Unit\Controller\Klarna;
 
 use Klarna\Base\Api\RequestHandlerInterface;
-use Klarna\Base\Test\Unit\Mock\MockFactory;
 use Klarna\Base\Test\Unit\Mock\TestObjectFactory;
 use Magento\Framework\App\RequestInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
 class FrontendAPIsRequestTest extends TestCase
 {
+    #[DataProvider('prepareData')]
     /**
      * @dataProvider prepareData
      * @param RequestHandlerInterface $controller
@@ -32,19 +35,19 @@ class FrontendAPIsRequestTest extends TestCase
         $this->assertEquals(get_class($request), get_class($controller->getRequest()));
     }
 
-    public function prepareData(): array
+    public static function prepareData(): array
     {
-        $classes = $this->getClassesInDirectory();
+        $classes = self::getClassesInDirectory();
 
         $data = [];
         foreach ($classes as $class) {
-            $data[] = $this->mockControllerAndRequest($class);
+            $data[] = self::mockControllerAndRequest($class);
         }
 
         return $data;
     }
 
-    private function getClassesInDirectory(): array
+    private static function getClassesInDirectory(): array
     {
         $collectedClasses = [];
 
@@ -74,11 +77,10 @@ class FrontendAPIsRequestTest extends TestCase
         return array_merge(...$collectedClasses);
     }
 
-    private function mockControllerAndRequest(string $class): array
+    private static function mockControllerAndRequest(string $class): array
     {
         $fullClassName = sprintf('Klarna\Kp\Controller\Klarna\%s', $class);
-        $mockFactory = new MockFactory($this);
-        $objectFactory = new TestObjectFactory($mockFactory);
+        $objectFactory = new TestObjectFactory('');
         $controller = $objectFactory->create($fullClassName);
         $dependencyMocks = $objectFactory->getDependencyMocks();
 
