@@ -1,5 +1,19 @@
 # Changelog
 
+## 10.1.1 / 2026-08-17
+
+### Breaking changes
+
+* None
+
+### Features / changes
+
+* None
+
+### Fixes
+
+* KUSTOM-89: Removed deprecated class `Klarna\Base\Helper\KlarnaConfig` reference
+
 ## 10.1.0 / 2026-06-26
 
 ### Breaking changes
