@@ -9,18 +9,6 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <virtualType name="KpKlarnaConfig" type="Klarna\Base\Helper\KlarnaConfig">
-        <arguments>
-            <argument name="eventPrefix" xsi:type="string">kp</argument>
-        </arguments>
-    </virtualType>
-
-    <type name="Klarna\Kp\Model\Api\Rest\Service\Payments">
-        <arguments>
-            <argument name="klarnaConfig" xsi:type="object">Klarna\Base\Helper\KlarnaConfig\Proxy</argument>
-        </arguments>
-    </type>
-
     <type name="Klarna\Kp\Plugin\Payment\Helper\DataPlugin">
         <arguments>
             <argument name="quoteProvider" xsi:type="object">Klarna\Kp\Model\QuoteProvider\CachingQuoteProvider</argument>
